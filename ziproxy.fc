@@ -1,0 +1,6 @@
+/etc/sysconfig/ziproxy					   				  gen_context(system_u:object_r:ziproxy_cfg_t,s0)
+/etc/ziproxy(/.*)?									  gen_context(system_u:object_r:ziproxy_cfg_t,s0)
+/usr/sbin/ziproxy					  --   				  gen_context(system_u:object_r:ziproxy_exec_t,s0)
+/usr/share/ziproxy(/.*)?								  gen_context(system_u:object_r:ziproxy_share_t,s0)
+/var/log/ziproxy(/.*)?					   				  gen_context(system_u:object_r:ziproxy_log_t,s0)
+

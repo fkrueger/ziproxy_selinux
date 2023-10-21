@@ -1,0 +1,15 @@
+[Unit]
+Description=ziproxy daemon
+Documentation=man:ziproxy(1)
+After=network.target nss-lookup.target
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/ziproxy
+WorkingDirectory=/usr/share/ziproxy
+ExecStart=/usr/sbin/ziproxy -d -u $USER -g $GROUP -c $CFGFILE $OPTS
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

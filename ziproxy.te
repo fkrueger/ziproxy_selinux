@@ -1,0 +1,165 @@
+policy_module(ziproxy, 20231021.1.9)
+
+# vim: softtabstop=2 tabstop=2 shiftwidth=2 expandtab
+
+
+require {
+  type crond_t;
+  type http_cache_port_t;
+  type logrotate_t;
+  type rpm_script_t;
+  type squid_port_t;
+  type system_cronjob_t;
+  type systemd_coredump_t;
+  type systemd_tmpfiles_t;
+  type setfiles_t;
+  type unconfined_t;
+  type unconfined_service_t;
+
+  class dir search;
+  class file { getattr open read };
+  class capability { dac_read_search setgid setuid };
+  class tcp_socket { accept bind connect create getattr listen setopt };
+  class udp_socket { connect create getattr setopt };
+  class netlink_route_socket { bind create getattr nlmsg_read };
+}
+
+
+
+## our types
+type ziproxy_t;
+type ziproxy_exec_t;
+
+type ziproxy_cfg_t;
+type ziproxy_log_t;
+type ziproxy_share_t;
+
+
+
+## global stuff
+define(`ziproxy_all_types',`{ ziproxy_t ziproxy_exec_t ziproxy_cfg_t ziproxy_log_t ziproxy_share_t }')
+define(`ziproxy_relabeler_types',`{ setfiles_t system_cronjob_t crond_t unconfined_t rpm_script_t }')
+
+
+
+## debug script:
+# echo "XX0"; audit2allow -Ri /var/log/audit/audit.log   > /root/x; vi /root/x
+# echo "XX1"; make -f /usr/share/selinux/devel/Makefile
+# echo "XX2"; semodule -r ziproxy
+# echo "XX3"; semodule -i /root/selinux/ziproxy-release/ziproxy.pp ; restorecon -vR /etc/ziproxy/ /etc/sysconfig/ziproxy /usr/share/ziproxy /usr/sbin/ziproxy
+# echo "XX4"; service ziproxy stop; rm -f /var/log/audit/audit.log ; service auditd restart; service ziproxy start
+##
+
+
+
+
+
+## init + proc trans
+getattr_files_pattern(init_t, ziproxy_cfg_t, ziproxy_cfg_t)
+read_files_pattern(init_t, ziproxy_cfg_t, ziproxy_cfg_t)
+search_dirs_pattern(init_t, ziproxy_share_t, ziproxy_share_t)
+list_dirs_pattern(init_t, ziproxy_share_t, ziproxy_share_t)
+
+init_daemon_domain(ziproxy_t, ziproxy_exec_t)
+
+corenet_tcp_bind_generic_node(ziproxy_t)
+corenet_tcp_bind_generic_port(ziproxy_t)
+
+# XXX type ziproxy_port_t; is unneeded, since we use present ports.
+corenet_port(squid_port_t)
+corenet_port(http_cache_port_t)
+corenet_tcp_connect_dns_port(ziproxy_t)
+corenet_tcp_connect_http_port(ziproxy_t)
+
+auth_read_passwd_file(ziproxy_t)
+sysnet_read_config(ziproxy_t)
+
+
+allow ziproxy_t self:capability { dac_read_search setgid setuid };
+allow ziproxy_t self:netlink_route_socket { bind create getattr nlmsg_read };
+allow ziproxy_t self:tcp_socket { accept bind create connect getattr listen setopt };
+allow ziproxy_t self:udp_socket { connect create getattr setopt };
+
+
+
+
+## ziproxy_cfg_t
+search_dirs_pattern(ziproxy_t, ziproxy_cfg_t, ziproxy_cfg_t)
+list_dirs_pattern(ziproxy_t, ziproxy_cfg_t, ziproxy_cfg_t)
+read_files_pattern(ziproxy_t, ziproxy_cfg_t, ziproxy_cfg_t)
+
+## ziproxy_log_t
+search_dirs_pattern(ziproxy_t, ziproxy_log_t, ziproxy_log_t)
+list_dirs_pattern(ziproxy_t, ziproxy_log_t, ziproxy_log_t)
+write_files_pattern(ziproxy_t, ziproxy_log_t, ziproxy_log_t)
+
+## ziproxy_share_t
+search_dirs_pattern(ziproxy_t, ziproxy_share_t, ziproxy_share_t)
+list_dirs_pattern(ziproxy_t, ziproxy_share_t, ziproxy_share_t)
+read_files_pattern(ziproxy_t, ziproxy_share_t, ziproxy_share_t)
+
+
+## dev stuff:
+####permissive ziproxy_t;
+
+
+
+
+
+
+
+
+## os integration:
+
+### setfiles_t (ie. restorecon):
+list_dirs_pattern(setfiles_t, ziproxy_all_types, ziproxy_all_types)
+
+### logrotate:
+search_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
+list_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
+manage_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
+
+### all necessary access for unconfined_t
+getattr_dirs_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+list_dirs_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+manage_dirs_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+exec_files_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+manage_files_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+manage_lnk_files_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+manage_sock_files_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)
+
+### all necessary access for unconfined_service_t
+getattr_dirs_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+list_dirs_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+manage_dirs_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+exec_files_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+manage_files_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+manage_lnk_files_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+manage_sock_files_pattern(unconfined_service_t, ziproxy_all_types, ziproxy_all_types)
+
+
+## selinux-relabelers-support:
+list_dirs_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+getattr_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+getattr_chr_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+getattr_fifo_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+getattr_lnk_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+getattr_sock_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+
+# relabelfrom:
+relabelfrom_dirs_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelfrom_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelfrom_chr_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelfrom_fifo_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelfrom_lnk_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelfrom_sock_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+
+# relabelto:
+relabelto_dirs_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelto_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelto_chr_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelto_fifo_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelto_lnk_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+relabelto_sock_files_pattern(ziproxy_relabeler_types, ziproxy_all_types, ziproxy_all_types)
+
+

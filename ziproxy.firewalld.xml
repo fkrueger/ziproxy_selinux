@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>ziproxy</short>
+  <description>ziproxy is a non-caching, compressing webproxy that offers image-compression, text-compression (in all its forms) and more.</description>
+  <port protocol="tcp" port="3128"/>
+  <port protocol="tcp" port="8080"/>
+</service>

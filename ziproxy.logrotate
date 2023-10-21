@@ -1,0 +1,11 @@
+/var/log/ziproxy/*.log {
+	rotate 52
+	weekly
+	compress
+	notifempty
+	missingok
+	postrotate
+		systemctl restart ziproxy.service
+	endscript
+	create 0660 ziproxy ziproxy
+}
