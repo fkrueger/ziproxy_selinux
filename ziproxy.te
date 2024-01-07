@@ -1,4 +1,4 @@
-policy_module(ziproxy, 20231021.1.9)
+policy_module(ziproxy, 20231111.1.4)
 
 # vim: softtabstop=2 tabstop=2 shiftwidth=2 expandtab
 
@@ -7,6 +7,7 @@ require {
   type crond_t;
   type http_cache_port_t;
   type logrotate_t;
+  type rpm_t;
   type rpm_script_t;
   type squid_port_t;
   type system_cronjob_t;
@@ -18,7 +19,7 @@ require {
 
   class dir search;
   class file { getattr open read };
-  class capability { dac_read_search setgid setuid };
+  class capability { dac_override dac_read_search setgid setuid };
   class tcp_socket { accept bind connect create getattr listen setopt };
   class udp_socket { connect create getattr setopt };
   class netlink_route_socket { bind create getattr nlmsg_read };
@@ -37,8 +38,8 @@ type ziproxy_share_t;
 
 
 ## global stuff
-define(`ziproxy_all_types',`{ ziproxy_t ziproxy_exec_t ziproxy_cfg_t ziproxy_log_t ziproxy_share_t }')
-define(`ziproxy_relabeler_types',`{ setfiles_t system_cronjob_t crond_t unconfined_t rpm_script_t }')
+define(`ziproxy_all_types',`{ ziproxy_t ziproxy_cfg_t ziproxy_exec_t ziproxy_log_t ziproxy_share_t }')
+define(`ziproxy_relabeler_types',`{ setfiles_t system_cronjob_t crond_t unconfined_t rpm_script_t rpm_t }')
 
 
 
@@ -75,7 +76,7 @@ auth_read_passwd_file(ziproxy_t)
 sysnet_read_config(ziproxy_t)
 
 
-allow ziproxy_t self:capability { dac_read_search setgid setuid };
+allow ziproxy_t self:capability { dac_read_search dac_override setgid setuid };
 allow ziproxy_t self:netlink_route_socket { bind create getattr nlmsg_read };
 allow ziproxy_t self:tcp_socket { accept bind create connect getattr listen setopt };
 allow ziproxy_t self:udp_socket { connect create getattr setopt };
@@ -104,12 +105,21 @@ read_files_pattern(ziproxy_t, ziproxy_share_t, ziproxy_share_t)
 
 
 
+fs_associate(ziproxy_cfg_t)
+fs_associate(ziproxy_log_t)
+fs_associate(ziproxy_share_t)
 
 
 
 
 
 ## os integration:
+
+### rpm_t:
+search_dirs_pattern(rpm_t, ziproxy_all_types, ziproxy_all_types)
+list_dirs_pattern(rpm_t, ziproxy_all_types, ziproxy_all_types)
+manage_dirs_pattern(rpm_t, ziproxy_all_types, ziproxy_all_types)
+manage_files_pattern(rpm_t, ziproxy_all_types, ziproxy_all_types)
 
 ### setfiles_t (ie. restorecon):
 list_dirs_pattern(setfiles_t, ziproxy_all_types, ziproxy_all_types)
@@ -118,6 +128,7 @@ list_dirs_pattern(setfiles_t, ziproxy_all_types, ziproxy_all_types)
 search_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
 list_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
 manage_dirs_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
+getattr_files_pattern(logrotate_t, ziproxy_all_types, ziproxy_all_types)
 
 ### all necessary access for unconfined_t
 getattr_dirs_pattern(unconfined_t, ziproxy_all_types, ziproxy_all_types)

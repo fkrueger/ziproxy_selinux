@@ -2,7 +2,7 @@
 
 Name: ziproxy_selinux
 Version: 3.3.2
-Release: 1%{dist}
+Release: 3%{dist}
 BuildArch: noarch
 Summary: SELinux policy module for ziproxy
 
@@ -125,6 +125,12 @@ exit 0
 #% doc % {_defaultdocdir}/% {name}-% {version}/readme.md
 
 %changelog
+* Sun Jan 7 2024 Frederic Krueger <fkrueger-dev-ziproxy_selinux@holics.at> 3.3.2-3
+- with the upgrade to rockylinux 9 / el9 some changes were necessary
+
+* Sat Nov 11 2023 Frederic Krueger <fkrueger-dev-ziproxy_selinux@holics.at> 3.3.2-2
+- ziproxy policy needed updating for associate and getattr-files
+
 * Sat Oct 21 2023 Frederic Krueger <fkrueger-dev-ziproxy_selinux@holics.at> 3.3.2-1
 - Initial package
 
